@@ -1,4 +1,4 @@
-package com.vogon101.chess.lib
+package com.vogon101.chess.lib.core
 
 /**
   * Game
@@ -20,7 +20,7 @@ class Game {
     if (start.piece.isDefined && start.piece.get.colour == nextColour) {
       println ("Right Colour")
 
-      val (success, b) = board.movePiece(start, end)
+      val (success, b) = board.movePiece(start, end, println)
 
       if (success) {
 

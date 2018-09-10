@@ -1,6 +1,5 @@
 package com.vogon101.chess.lib
 import scala.math.{abs, min, max}
-import com.vogon101.chess.lib.{White, Black}
 
 /**
   * Board
@@ -37,20 +36,20 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
 
   def squareOf(piece: Piece): Option[Square] = squares.find(_.piece.contains(piece))
 
-  def pathClear(start: Square, end: Square): Boolean = {
+  def pathClear(start: Square, end: Square, log: (Any) => Unit = (x: Any) => {}): Boolean = {
 
     assert(start != end)
 
     if (start.rank != end.rank) {
-      if (start.file != end.file) diagonalClear(start, end)
+      if (start.file != end.file) diagonalClear(start, end, log)
       else fileClear(start, end)
     }
     else rankClear(start,end)
 
   }
 
-  private def diagonalClear(start: Square, end: Square): Boolean = {
-    //println(s"Diagonal Clear $start -> $end")
+  private def diagonalClear(start: Square, end: Square, log: (Any) => Unit = (x: Any) => {}): Boolean = {
+    log(s"Diagonal Clear $start -> $end")
     if (abs(start.rank - end.rank) != abs(start.file - end.file)) false
     else {
       //println("Diagonal")
@@ -61,14 +60,14 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
       if ((lowerRank == start.rank) == (lowerFile == start.file)) {
         val s = Range(1, upperRank - lowerRank)
           .map(idx => board(lowerRank + idx)(lowerFile + idx))
-        //println("LTR")
-        //println(s)
+        log("LTR")
+        log(s)
         s.forall(_.isEmpty)
       } else {
         val s = Range(1, upperRank - lowerRank)
           .map(idx => board(upperRank - idx)(lowerFile + idx))
-        //println("RTL")
-        //println(s)
+        log("RTL")
+        log(s)
         s.forall(_.isEmpty)
       }
     }
@@ -100,7 +99,7 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
         case x => if (showAttack.isDefined && squareIsAttacked(x, showAttack.get)) "x" + showAttack.get.letter
           else "  "
       }.mkString("|")+"|"
-    }.mkString("\n") + "\n |a |b |c |d |e |f |g |h |"
+    }.mkString("\n") + "\n |h |g |f |e |d |c |b |a |"
   }
 
   def getSquare(name: String): Square = {
@@ -110,6 +109,8 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
     board(number)(letter)
 
   }
+
+  def getSquare(rank:Int, file: Int):Square = board(rank)(file)
 
   def translateName(name: String): (Int, Int) = {
     assert(name.length == 2)
@@ -138,24 +139,51 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
 
   def setPiece(p: Option[Piece], square: Square): Board = setPiece(p, square.rank, square.file)
 
-  def movePiece(start:Square, end:Square): (Boolean, Board) = {
+  //TODO: Promotion
+  //TODO: Castling
+  def movePiece(start:Square, end:Square, log: (Any) => Unit = (x: Any) => {}): (Boolean, Board) = {
 
-    //println(start)
-    //println(end)
+    log(start)
+    log(end)
 
     //TODO: Check logic
 
     if (start.isEmpty) {
-      //println("Start empty")
-      //println(start)
+      log("Start empty")
+      log(start)
       (false, this)
     }
     else if (start.piece.get.canMove(start, this)(end)) {
-      //println("Can move")
-      val p = Some(start.piece.get.moved)
-      val b1 = setPiece(None, start)
-      val b2 = b1.setPiece(p, end)
-      (true, b2)
+      (start.piece, end.piece) match {
+        case (Some(k: King), Some(r: Rook)) if k.colour == r.colour =>
+          log("Castling")
+          if (start.file < end.file) {
+            //Queenside
+            val p_k = Some(k.moved)
+            val p_r = Some(r.moved)
+            val b1 = setPiece(None, start).setPiece(None, end)
+            val b2 = b1.setPiece(p_k, b1.getSquare(start.rank , 5))
+            val b3 = b2.setPiece(p_r, b2.getSquare(start.rank, 4))
+            (true, b3)
+          } else {
+            //Kingside
+            val p_k = Some(k.moved)
+            val p_r = Some(r.moved)
+            val b1 = setPiece(None, start).setPiece(None, end)
+            val b2 = b1.setPiece(p_k, b1.getSquare(start.rank , 1))
+            val b3 = b2.setPiece(p_r, b2.getSquare(start.rank, 2))
+            (true, b3)
+          }
+        case (Some(ps: Piece), _) =>
+          log("Can move")
+          val p = Some(ps.moved)
+          val b1 = setPiece(None, start)
+          val b2 = b1.setPiece(p, end)
+          (true, b2)
+
+      }
+
+
     }
     else (false, this)
 
@@ -178,7 +206,7 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
 
 object Board {
 
-  val LETTERS = List("a","b","c","d","e","f","g","h")
+  val LETTERS = List("a","b","c","d","e","f","g","h").reverse
 
   def startingBoard: Board = {
 
@@ -203,8 +231,8 @@ object Board {
     val Bb1 = new Bishop(Black)
     val Bb2 = new Bishop(Black)
 
-    val backRankWhite = List(Rw1, Nw1, Bw1, Qw, Kw, Bw2, Nw2, Rw2)
-    val backRankBlack = List(Rb1, Nb1, Bb1, Qb, Kb, Bb2, Nb2, Rb2)
+    val backRankWhite = List(Rw1, Nw1, Bw1, Kw, Qw, Bw2, Nw2, Rw2)
+    val backRankBlack = List(Rb1, Nb1, Bb1, Kb, Qb, Bb2, Nb2, Rb2)
 
     val board = Range(0,8).map {
       case 0 => backRankWhite.zipWithIndex.map {
