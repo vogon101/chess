@@ -1,4 +1,4 @@
-package com.vogonjeltz.machineInt.evoTanks.networks
+package com.vogon101.chess.lib.ai.networks
 
 import breeze.linalg.{DenseMatrix, DenseVector}
 import breeze.linalg._

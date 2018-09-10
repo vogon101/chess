@@ -1,4 +1,4 @@
-package com.vogon101.chess.lib
+package com.vogon101.chess.lib.core
 
 /**
   * Colour

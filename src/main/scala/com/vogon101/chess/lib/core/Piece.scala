@@ -1,6 +1,4 @@
-package com.vogon101.chess.lib
-
-import com.vogon101.chess.lib.core.{Board, Colour, Square}
+package com.vogon101.chess.lib.core
 
 import scala.math.abs
 
@@ -25,7 +23,7 @@ abstract class Piece(
   def can_attack(currentSquare: Square, board: Board)(targetSquare: Square): Boolean =
     canMove(currentSquare, board, sanityCheck = false)(targetSquare)
 
-  override def toString: String = letter + colour.letter
+  override val toString: String = letter + colour.letter
 
   def moved: Piece
 

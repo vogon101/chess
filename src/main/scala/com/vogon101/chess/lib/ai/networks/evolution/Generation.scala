@@ -1,7 +1,7 @@
-package com.vogonjeltz.machineInt.evoTanks.networks.evolution
+package com.vogon101.chess.lib.ai.networks.evolution
 
 import breeze.linalg.DenseVector
-import com.vogonjeltz.machineInt.evoTanks.networks.NeuralNetwork
+import com.vogon101.chess.lib.ai.networks.NeuralNetwork
 
 
 /**

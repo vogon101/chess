@@ -1,4 +1,4 @@
-package com.vogonjeltz.machineInt.evoTanks.networks.evolution
+package com.vogon101.chess.lib.ai.networks.evolution
 
 /**
   * Created by Freddie on 29/03/2017.

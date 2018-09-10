@@ -1,4 +1,6 @@
-package com.vogon101.chess.lib.core
+package com.vogon101.chess.lib
+
+import com.vogon101.chess.lib.core.{Board, Colour, Square, White}
 
 /**
   * Game
@@ -16,21 +18,21 @@ class Game {
 
 
   def nextMove(start: Square, end: Square): (Boolean, Boolean) = {
-    println(nextColour)
+    //println(nextColour)
     if (start.piece.isDefined && start.piece.get.colour == nextColour) {
-      println ("Right Colour")
+      //println ("Right Colour")
 
-      val (success, b) = board.movePiece(start, end, println)
+      val (success, b) = board.movePiece(start, end)
 
       if (success) {
 
-        println ("Success")
+        //println ("Success")
         if (b.isCheck(nextColour)) {
-          println("Check Fail")
+          //println("Check Fail")
           (false, false)
         }
         else {
-          println("Real Success")
+          //println("Real Success")
           _board = b
           _nextColour = nextColour.otherColour
           (true, b.isCheckMate(nextColour))

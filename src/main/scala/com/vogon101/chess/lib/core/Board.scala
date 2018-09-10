@@ -1,5 +1,8 @@
-package com.vogon101.chess.lib
-import scala.math.{abs, min, max}
+package com.vogon101.chess.lib.core
+
+import com.vogon101.chess.lib._
+
+import scala.math.{abs, max, min}
 
 /**
   * Board
@@ -20,16 +23,20 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
 
   lazy val squares: List[Square] = board.flatten
 
-  def pieces(colour: Colour): List[(Piece, Square)] = squares.filter(X => !X.isEmpty && X.piece.get.colour == colour).map(X => (X.piece.get, X))
+  lazy val whitePieces: List[(Piece, Square)] = squares.filter(X => !X.isEmpty && X.piece.get.colour == White).map(X => (X.piece.get, X))
+  lazy val blackPieces: List[(Piece, Square)] = squares.filter(X => !X.isEmpty && X.piece.get.colour == Black).map(X => (X.piece.get, X))
+
+  def pieces(colour: Colour): List[(Piece, Square)] = colour match {
+    case White => whitePieces
+    case Black => blackPieces
+  }
 
   lazy val pieces: List[(Piece, Square)] = squares.filterNot(_.isEmpty).map(X => (X.piece.get, X))
 
   def squareIsAttacked(square: Square, byColour: Colour):Boolean = {
 
-    val piecies_list = squares.filter(X => X.piece.isDefined && X.piece.get.colour == byColour).map(X => (X, X.piece.get))
-
-    piecies_list.exists {
-      case (s,p) => p.can_attack(s, this)(square)
+    pieces(byColour).exists {
+      case (piece, currentSquare) => piece.can_attack(currentSquare, this)(square)
     }
 
   }
@@ -139,8 +146,6 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
 
   def setPiece(p: Option[Piece], square: Square): Board = setPiece(p, square.rank, square.file)
 
-  //TODO: Promotion
-  //TODO: Castling
   def movePiece(start:Square, end:Square, log: (Any) => Unit = (x: Any) => {}): (Boolean, Board) = {
 
     log(start)
@@ -174,6 +179,12 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
             val b3 = b2.setPiece(p_r, b2.getSquare(start.rank, 2))
             (true, b3)
           }
+        case (Some(pawn: Pawn), _) if end.rank == 3.5 + 3.5 * pawn.colour.direction =>
+            log(s"Pawn promotion on $end")
+            val q = Some(new Queen(pawn.colour, false))
+            val b1 = setPiece(None, start)
+            val b2 = b1.setPiece(q, end)
+            (true, b2)
         case (Some(ps: Piece), _) =>
           log("Can move")
           val p = Some(ps.moved)
@@ -200,6 +211,13 @@ class Board(start_board: Option[List[List[Square]]] = None, val kings: List[King
     val king = kings.find(_.colour == colour).get
     val kingSquare = squareOf(king).get
     squareIsAttacked(kingSquare, colour.otherColour)
+  }
+
+  def isStalemate(nextColour: Colour): Boolean = {
+    pieces.forall(_._1.isInstanceOf[King]) || pieces(nextColour)
+      .flatMap{case (p, s) =>
+        p.possibleMoves(s, this).map(movePiece(s, _))
+      }.forall(_._2.isCheck(nextColour))
   }
 
 }
